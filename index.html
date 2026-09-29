@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>业务系统营销培训练习平台</title>
+<style>
+:root{
+  --blue:#2563eb; --blue-d:#1d4ed8; --blue-l:#eff6ff;
+  --green:#16a34a; --green-l:#f0fdf4; --red:#dc2626; --red-l:#fef2f2;
+  --orange:#ea580c; --amber:#d97706; --amber-l:#fffbeb;
+  --gray:#64748b; --gray-l:#f1f5f9; --border:#e2e8f0;
+  --bg:#f6f8fb; --card:#ffffff; --text:#0f172a; --text-2:#475569;
+  --radius:16px;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:16px; line-height:1.6;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+.hidden{display:none!important}
+
+/* ===== 顶部导航 ===== */
+.nav{
+  position:sticky;top:0;z-index:50;background:var(--card);
+  border-bottom:1px solid var(--border); padding:12px 18px;
+  display:flex;align-items:center;gap:12px;
+}
+.nav .back{font-size:22px;color:var(--text-2);padding:4px 8px;border-radius:8px;line-height:1}
+.nav .back:active{background:var(--gray-l)}
+.nav .title{font-size:17px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:none}
+
+/* ===== 页面容器 ===== */
+.page{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+.page.wide{max-width:1040px}
+
+/* ===== 首页 ===== */
+.hero{background:linear-gradient(135deg,#1e40af,#2563eb 55%,#7c3aed);border-radius:20px;padding:26px 24px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero h1{font-size:24px;font-weight:800;margin-bottom:6px}
+.hero .sub{font-size:14px;opacity:.92;margin-bottom:18px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 8px;text-align:center}
+.stat .num{font-size:22px;font-weight:800;line-height:1.2}
+.stat .lb{font-size:11px;opacity:.85;margin-top:2px}
+
+.section-title{font-size:15px;font-weight:700;color:var(--text);margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:"";width:4px;height:16px;background:var(--blue);border-radius:2px}
+
+.mode-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.mode-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;cursor:pointer;transition:.15s;text-align:left;box-shadow:var(--shadow);position:relative;
+}
+.mode-card:active{transform:scale(.98)}
+.mode-card .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px}
+.mode-card .nm{font-weight:700;font-size:16px;margin-bottom:2px}
+.mode-card .ds{font-size:12px;color:var(--gray);line-height:1.45}
+.mode-card .badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--gray-l);color:var(--text-2)}
+
+.ic-blue{background:var(--blue-l);color:var(--blue)}
+.ic-green{background:var(--green-l);color:var(--green)}
+.ic-orange{background:#fff7ed;color:var(--orange)}
+.ic-purple{background:#f5f3ff;color:#7c3aed}
+.ic-red{background:var(--red-l);color:var(--red)}
+.ic-amber{background:var(--amber-l);color:var(--amber)}
+
+/* 能力画像卡 */
+.ability-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.ability-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ability-row:last-child{margin-bottom:0}
+.ability-row .dim{width:44px;font-size:13px;font-weight:600;color:var(--text-2);flex:none}
+.ability-row .bar{flex:1;height:10px;background:var(--gray-l);border-radius:10px;overflow:hidden}
+.ability-row .bar i{display:block;height:100%;border-radius:10px;transition:.4s}
+.ability-row .pct{width:44px;text-align:right;font-size:13px;font-weight:700;color:var(--text-2);flex:none}
+
+/* ===== 答题页 ===== */
+.quiz-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.quiz-top .prog{flex:1;height:8px;background:var(--gray-l);border-radius:10px;overflow:hidden}
+.quiz-top .prog i{display:block;height:100%;background:var(--blue);border-radius:10px;transition:.3s}
+.quiz-top .cnt{font-size:13px;color:var(--text-2);font-weight:600;white-space:nowrap}
+
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 18px;box-shadow:var(--shadow);margin-top:12px}
+.q-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+.chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px}
+.chip.type{background:var(--blue-l);color:var(--blue)}
+.chip.type.multi{background:#f5f3ff;color:#7c3aed}
+.chip.type.judge{background:var(--amber-l);color:var(--amber)}
+.chip.type.fill{background:#ecfeff;color:#0891b2}
+.chip.type.subjective{background:#fdf2f8;color:#db2777}
+.chip.dim{background:var(--gray-l);color:var(--text-2)}
+.chip.diff{background:transparent;color:var(--gray);padding:3px 4px}
+.chip.chap{background:var(--gray-l);color:var(--text-2);margin-left:auto}
+
+.q-text{font-size:17px;font-weight:600;line-height:1.65;margin-bottom:16px;white-space:pre-wrap}
+
+/* 选项 */
+.opt{
+  display:flex;align-items:flex-start;gap:12px;padding:14px 14px;border:1.5px solid var(--border);
+  border-radius:12px;margin-bottom:10px;cursor:pointer;transition:.12s;background:#fff;font-size:15px;
+}
+.opt:active{background:var(--gray-l)}
+.opt .key{width:26px;height:26px;border-radius:8px;background:var(--gray-l);color:var(--text-2);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;margin-top:1px}
+.opt .txt{flex:1;line-height:1.5}
+.opt.sel{border-color:var(--blue);background:var(--blue-l)}
+.opt.sel .key{background:var(--blue);color:#fff}
+.opt.right{border-color:var(--green);background:var(--green-l)}
+.opt.right .key{background:var(--green);color:#fff}
+.opt.wrong{border-color:var(--red);background:var(--red-l)}
+.opt.wrong .key{background:var(--red);color:#fff}
+.opt.dim{opacity:.55}
+.opt.disabled{cursor:default}
+
+/* 判断按钮 */
+.judge-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.judge-btn{padding:22px;border:1.5px solid var(--border);border-radius:14px;font-size:18px;font-weight:700;text-align:center;transition:.12s;background:#fff}
+.judge-btn.yes:active{background:var(--green-l)}
+.judge-btn.no:active{background:var(--red-l)}
+.judge-btn.right{border-color:var(--green);background:var(--green-l);color:var(--green)}
+.judge-btn.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+.judge-btn.dim{opacity:.5}
+
+/* 填空 */
+.fill-input{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:inherit;color:var(--text);outline:none;transition:.12s}
+.fill-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.fill-input.right{border-color:var(--green);background:var(--green-l)}
+.fill-input.wrong{border-color:var(--red);background:var(--red-l)}
+
+/* 反馈解析 */
+.feedback{border-radius:12px;padding:14px 16px;margin-top:14px;font-size:14px;display:none}
+.feedback.show{display:block;animation:fadeIn .2s}
+.feedback.right{background:var(--green-l);border:1px solid #bbf7d0}
+.feedback.wrong{background:var(--red-l);border:1px solid #fecaca}
+.feedback .fb-title{font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.feedback.right .fb-title{color:var(--green)}
+.feedback.wrong .fb-title{color:var(--red)}
+.feedback .fb-answer{font-weight:600;margin-bottom:6px}
+.feedback .fb-explain{color:var(--text-2);line-height:1.65}
+.feedback .rubric{background:#fff;border-radius:8px;padding:12px;margin-top:8px;color:var(--text-2);line-height:1.7;white-space:pre-wrap;border:1px dashed var(--border)}
+
+/* 底部操作栏 */
+.action-bar{display:flex;gap:10px;margin-top:18px}
+.btn{
+  flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;text-align:center;
+  transition:.12s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:active{background:var(--blue-d)}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:active{background:var(--gray-l)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:active{background:#15803d}
+.btn-fav{background:var(--amber-l);border:1px solid #fde68a;color:var(--amber);width:52px;flex:none}
+.btn-fav.on{background:#fef3c7;color:#d97706}
+.btn-fav .star{font-size:20px}
+
+/* ===== 答题卡 ===== */
+.sheet{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:860px;max-height:78vh;overflow:auto;padding:20px}
+.sheet .panel .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sheet .panel .h b{font-size:17px}
+.sheet .legend{display:flex;gap:14px;font-size:12px;color:var(--text-2);margin-bottom:14px;flex-wrap:wrap}
+.sheet .legend span{display:flex;align-items:center;gap:5px}
+.dot{width:12px;height:12px;border-radius:4px;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.grid .cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text-2)}
+.grid .cell.right{background:var(--green);color:#fff;border-color:var(--green)}
+.grid .cell.wrong{background:var(--red);color:#fff;border-color:var(--red)}
+.grid .cell.cur{box-shadow:0 0 0 2px var(--blue)}
+.grid .cell .star-flag{position:absolute}
+
+/* ===== 模拟考试 ===== */
+.exam-timer{
+  display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:10px 16px;margin-bottom:8px;font-weight:700;color:var(--text);
+}
+.exam-timer.warn{color:var(--red)}
+.exam-timer .clock{font-variant-numeric:tabular-nums;font-size:18px}
+.exam-rule{background:var(--amber-l);border:1px solid #fde68a;border-radius:12px;padding:12px 16px;font-size:13px;color:#92400e;margin-bottom:12px;line-height:1.6}
+
+/* 成绩单 */
+.result{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 22px;box-shadow:var(--shadow);text-align:center}
+.result .score-big{font-size:56px;font-weight:800;line-height:1;margin:8px 0}
+.result .grade{display:inline-block;font-size:15px;font-weight:700;padding:6px 18px;border-radius:20px;margin-bottom:14px}
+.grade-a{background:var(--green-l);color:var(--green)}
+.grade-b{background:var(--blue-l);color:var(--blue)}
+.grade-c{background:var(--amber-l);color:var(--amber)}
+.grade-d{background:var(--red-l);color:var(--red)}
+.result .tips{font-size:13px;color:var(--text-2);line-height:1.7;text-align:left;margin-top:14px;background:var(--gray-l);border-radius:10px;padding:14px}
+.result .warn-line{color:var(--red);font-weight:600}
+.breakdown{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}
+.breakdown td,.breakdown th{padding:9px 8px;border-bottom:1px solid var(--border);text-align:left}
+.breakdown th{color:var(--text-2);font-weight:600}
+.breakdown .dim-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.footer-note{text-align:center;font-size:12px;color:var(--gray);margin-top:28px}
+
+/* ===== 系统选择 ===== */
+.sys-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:20px 18px;cursor:pointer;transition:.15s;box-shadow:var(--shadow);position:relative;
+}
+.sys-card:active{transform:scale(.98)}
+.sys-card .sys-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sys-card .sys-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none;color:#fff}
+.sys-card .sys-nm{font-size:18px;font-weight:700;line-height:1.25}
+.sys-card .sys-sub{font-size:12px;color:var(--gray);line-height:1.5;margin-bottom:10px}
+.sys-card .sys-stat{display:flex;gap:18px;font-size:12px;color:var(--text-2)}
+.sys-card .sys-stat b{color:var(--text);font-size:14px}
+.sys-card .sys-go{position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:18px;color:var(--gray)}
+.sys-card.cur{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+#systemGrid{display:flex;flex-direction:column;gap:12px}
+
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="nav">
+  <button class="back hidden" id="btnBack" onclick="goHome()">←</button>
+  <div class="logo" id="navLogo">📚</div>
+  <div class="title" id="navTitle">业务系统营销培训练习平台</div>
+  <button class="back hidden" id="btnSys" style="font-size:14px;font-weight:600;color:var(--blue)" onclick="showSystemPage()">切系统</button>
+  <button class="back" id="btnSheet" style="font-size:16px;font-weight:700" onclick="toggleSheet()">答题卡</button>
+</div>
+
+<!-- 系统选择页（首页） -->
+<div class="page wide" id="pageSystem">
+  <div class="hero" style="background:linear-gradient(135deg,#1e293b,#334155)">
+    <h1>业务系统营销培训练习平台</h1>
+    <div class="sub">选择你要练习的系统 · 驾校科目一式刷题 · 错题重练 · 模拟考试</div>
+  </div>
+  <div class="section-title">选择系统</div>
+  <div id="systemGrid"></div>
+  <div class="footer-note">各系统题库独立 · 进度 / 错题 / 收藏分别保存</div>
+</div>
+
+<!-- 首页 -->
+<div class="page wide" id="pageHome">
+  <div class="hero" id="heroBox">
+    <h1 id="heroTitle">培训练习系统</h1>
+    <div class="sub" id="heroSub">驾校科目一式刷题 · 由浅入深 · 能力画像 · 综合模拟考试</div>
+    <div class="stat-grid">
+      <div class="stat"><div class="num" id="stTotal">0</div><div class="lb">总题量</div></div>
+      <div class="stat"><div class="num" id="stDone">0</div><div class="lb">已练</div></div>
+      <div class="stat"><div class="num" id="stAcc">0%</div><div class="lb">正确率</div></div>
+      <div class="stat"><div class="num" id="stWrong">0</div><div class="lb">错题</div></div>
+    </div>
+  </div>
+
+  <div class="section-title">练习模式</div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startMode('seq')">
+      <div class="ic ic-blue">📖</div><div class="nm">顺序练习</div>
+      <div class="ds">按阶段顺序逐题练习，边学边记</div>
+    </div>
+    <div class="mode-card" onclick="startMode('random')">
+      <div class="ic ic-purple">🎲</div><div class="nm">随机练习</div>
+      <div class="ds">全部题目打乱顺序，检验真实水平</div>
+    </div>
+    <div class="mode-card" onclick="startMode('chapter')">
+      <div class="ic ic-orange">🗂️</div><div class="nm">章节练习</div>
+      <div class="ds">按阶段 / 维度针对性突破弱项</div>
+    </div>
+    <div class="mode-card" onclick="startMode('wrong')">
+      <div class="ic ic-red">📕</div><div class="nm">错题重练</div>
+      <div class="ds">只刷错题，直到全部掌握</div><div class="badge" id="badgeWrong">0</div>
+    </div>
+    <div class="mode-card" onclick="startMode('fav')">
+      <div class="ic ic-amber">⭐</div><div class="nm">我的收藏</div>
+      <div class="ds">重点题、易错题随时回顾</div><div class="badge" id="badgeFav">0</div>
+    </div>
+    <div class="mode-card" onclick="startExam()">
+      <div class="ic ic-green">📝</div><div class="nm">模拟考试</div>
+      <div class="ds" id="examDesc">闭卷 · 100 分 · 80 分通过</div>
+    </div>
+  </div>
+
+  <div class="section-title" id="abilityTitle">能力画像</div>
+  <div class="ability-card" id="abilityCard"></div>
+
+  <div class="footer-note" id="footerNote"></div>
+</div>
+
+<!-- 章节选择页 -->
+<div class="page" id="pageChapter">
+  <div class="section-title">选择练习范围</div>
+  <div id="chapterList"></div>
+</div>
+
+<!-- 答题页 -->
+<div class="page" id="pageQuiz">
+  <div class="quiz-top">
+    <span class="cnt" id="qCnt">1/99</span>
+    <div class="prog"><i id="qProg" style="width:0%"></i></div>
+  </div>
+  <div class="q-card" id="qCard"></div>
+  <div class="action-bar" id="actionBar"></div>
+</div>
+
+<!-- 模拟考试规则页 -->
+<div class="page" id="pageExamIntro">
+  <div class="exam-rule" id="examRuleText"></div>
+  <div class="section-title">确认开始</div>
+  <div class="mode-card" style="width:100%" onclick="beginExam()">
+    <div class="ic ic-green">🚀</div><div class="nm">开始考试</div>
+    <div class="ds">计时开始后不可暂停，请预留 90 分钟</div>
+  </div>
+</div>
+
+<!-- 答题卡弹窗 -->
+<div class="sheet hidden" id="sheet" onclick="if(event.target===this)toggleSheet()">
+  <div class="panel">
+    <div class="h"><b>答题卡</b><button onclick="toggleSheet()" style="font-size:20px;color:var(--text-2)">×</button></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--green)"></i>答对</span>
+      <span><i class="dot" style="background:var(--red)"></i>答错</span>
+      <span><i class="dot" style="background:#fff;border:1px solid var(--border)"></i>未做</span>
+      <span>⭐ 已收藏</span>
+    </div>
+    <div class="grid" id="sheetGrid"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="data-qlhl.js"></script>
+<script src="data-trdz.js"></script>
+<script src="data-ysby.js"></script>
+<script src="data-cmf.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
