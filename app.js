@@ -8,7 +8,7 @@ const state = {
   list: [],
   idx: 0,
   answered: {},
-  exam: { active:false, startedAt:0, remaining:0, timer:null, subSelf:{}, subDone:false },
+  exam: { active:false, startedAt:0, remaining:0, timer:null, subSelf:{}, subDone:false, kind:'exam' },
 };
 let store = loadStore();
 
@@ -125,6 +125,10 @@ function renderHome(){
   // 考试描述
   const exam = sys.exam||{};
   $('examDesc').textContent = `闭卷 · 100 分 · ${Math.round((exam.duration||7200)/60)} 分钟 · ${exam.pass||80} 分通过`;
+
+  // 现场模拟考试入口（仅含现场考试题的系统显示）
+  const oralCount = bank.filter(q=>q.section==='现场考试题库').length;
+  $('oralExamCard').classList.toggle('hidden', !oralCount);
 
   $('abilityTitle').textContent = DIMENSIONS().length + ' 维能力画像';
   $('footerNote').textContent = `数据来源：《${sys.name}培训评测考试体系》 · 仅供内部培训使用`;
@@ -424,10 +428,14 @@ function renderSheet(){
 
 /* ================= 模拟考试 ================= */
 function examCfg(){ return curSys().exam || { total:100, duration:90*60, pass:80 }; }
-function examIds(){ return BANK().filter(q=>q.score && q.score>0).map(q=>q.id); }
+// 综合考试题 = 带 score 且非「现场考试题库」的题
+function examIds(){ return BANK().filter(q=>q.score && q.score>0 && q.section!=='现场考试题库').map(q=>q.id); }
+// 现场考试题 = section 为「现场考试题库」的题
+function oralExamIds(){ return BANK().filter(q=>q.section==='现场考试题库').map(q=>q.id); }
 
 function startExam(){
   state.mode='exam';
+  state.exam.kind='exam';
   const cfg = examCfg();
   const mins = Math.round((cfg.duration||7200)/60);
   const pass = cfg.pass||80;
@@ -437,11 +445,30 @@ function startExam(){
     · 闭卷 ${mins} 分钟 · 100 分 · <b>${pass} 分通过</b><br>
     · 客观题自动判分，主观题对照评分要点自评<br>
     · 交卷后生成得分与定级，请认真作答`;
+  $('examStartBtnText').textContent = '开始考试';
+  $('examStartBtnSub').textContent = `计时开始后不可暂停，请预留 ${mins} 分钟`;
+  show('pageExamIntro');
+}
+
+function startOralExam(){
+  const ids = oralExamIds();
+  if(!ids.length){ alert('该系统暂无现场考试题'); return; }
+  state.mode='exam';
+  state.exam.kind='oral';
+  $('navTitle').textContent = curSys().name+' · 现场模拟考试';
+  $('examRuleText').innerHTML = `
+    <b>${curSys().name} · 现场面对面口试模拟</b><br>
+    · 19 题 · 100 分（口述 + 情景 + 合规）<br>
+    · 客观题自动判分，口述/情景/合规题对照评分要点自评<br>
+    · <b>四档定级</b>：精通 90–100 / 掌握 80–89 / 理解 70–79 / 熟悉 60–69<br>
+    · <b style="color:#dc2626">一票否决</b>：合规题全错降一档；价格/投产比/分利/安全承诺题口头承诺具体数字 = 该题 0 分`;
+  $('examStartBtnText').textContent = '开始现场考试';
+  $('examStartBtnSub').textContent = '建议按真实口试节奏，逐题口述后自评';
   show('pageExamIntro');
 }
 
 function beginExam(){
-  const ids = examIds();
+  const ids = state.exam.kind==='oral' ? oralExamIds() : examIds();
   if(!ids.length){ alert('该题库暂无考试题'); return; }
   state.list = ids;
   state.idx = 0;
@@ -451,7 +478,7 @@ function beginExam(){
   state.exam.subDone = false;
   multiSel = new Set();
   startExamTimer();
-  $('navTitle').textContent = curSys().name+' · 模拟考试';
+  $('navTitle').textContent = curSys().name+' · '+(state.exam.kind==='oral'?'现场模拟考试':'模拟考试');
   show('pageQuiz');
   renderExamBar();
   renderQuestion();
@@ -465,12 +492,17 @@ function renderExamBar(){
     bar.className='exam-timer';
     $('pageQuiz').insertBefore(bar, $('pageQuiz').firstChild);
   }
-  const mins = Math.floor(examCfg().duration/60);
+  const mins = Math.floor(examDuration()/60);
   bar.innerHTML = `⏱ 剩余时间 <span class="clock" id="examClock">${mins}:00</span>`;
 }
 
+function examDuration(){
+  // 现场考试 50 分钟，综合考试按系统配置
+  return state.exam.kind==='oral' ? 50*60 : (examCfg().duration || 5400);
+}
+
 function startExamTimer(){
-  const dur = examCfg().duration || 5400;
+  const dur = examDuration();
   state.exam.remaining = dur;
   state.exam.startedAt = Date.now();
   clearInterval(state.exam.timer);
@@ -532,7 +564,7 @@ function submitExam(force){
   const isPass = totalScore>=pass;
   const finalPass = isPass && !compAllWrong;
 
-  showResult({objScore, objFull, subScore, subFull, totalScore, totalFull, pass, isPass, finalPass, compAllWrong});
+  showResult({objScore, objFull, subScore, subFull, totalScore, totalFull, pass, isPass, finalPass, compAllWrong, kind: state.exam.kind});
 }
 
 function askSubjectiveScore(subIds, objScore, objFull){
@@ -555,34 +587,70 @@ function showResult(r){
   const q = $('qCard'); q.innerHTML='';
   $('actionBar').style.display='none';
 
+  const isOral = r.kind==='oral';
   const pct = r.totalFull? Math.round(r.totalScore/r.totalFull*100) : 0;
-  let grade, gradeCls, meaning;
-  if(r.finalPass && pct>=90){ grade='优秀'; gradeCls='grade-a'; meaning='知识过硬、话术熟练，可独立见客户'; }
-  else if(r.finalPass){ grade='良好'; gradeCls='grade-b'; meaning='掌握扎实，个别场景需补'; }
-  else if(pct>=60 && !r.compAllWrong){ grade='合格'; gradeCls='grade-c'; meaning='基本掌握，应用不熟，多做练习'; }
-  else { grade='待提升'; gradeCls='grade-d'; meaning='知识底账不牢或口径纪律失守，回炉重学后再考'; }
 
-  let tips = '';
-  if(!r.isPass) tips += `· 距离通过（${r.pass} 分）还差 <b>${r.pass - r.totalScore}</b> 分，建议针对性刷「错题重练」与对应章节。<br>`;
-  if(r.compAllWrong) tips += `<span class="warn-line">· 合规维题目全部答错，触发「一票否决」！价格、投产比、安全承诺口径是红线，请重点复习。</span><br>`;
-  if(pct<80) tips += `· 得分率 ${pct}%，客观题 ${r.objScore}/${r.objFull} 分，需加强事实底账。<br>`;
-  if(r.finalPass && pct>=90) tips += `· 已达标，可独立拜访客户。<br>`;
+  let grade, gradeCls, meaning, tips='';
+
+  if(isOral){
+    // 现场考试：四档定级（熟悉60-69/理解70-79/掌握80-89/精通90-100），合规全错降一档
+    const score = r.totalScore;
+    let g;
+    if(score>=90) g={name:'精通', cls:'grade-a', m:'灵活组合多套方法、从容应对追问与对抗、主动管理预期，可独立拜访、担任导师'};
+    else if(score>=80) g={name:'掌握', cls:'grade-b', m:'标准场景能独立完成、常规追问能接住、口径基本准确，可结对跟访客户'};
+    else if(score>=70) g={name:'理解', cls:'grade-c', m:'能用自己的话说清概念与机制，应用场景不流畅需引导'};
+    else if(score>=60) g={name:'熟悉', cls:'grade-d', m:'能准确复述定位、关键数字与标准口径，为什么与怎么用需提示'};
+    else g={name:'未达熟悉', cls:'grade-d', m:'事实底账不牢，需回炉重学后再考'};
+    // 一票否决：合规题全错降一档
+    let downgraded = false;
+    if(r.compAllWrong && score>=60){
+      const order=['精通','掌握','理解','熟悉'];
+      const idx=order.indexOf(g.name);
+      if(idx>=0){ g={name:order[Math.min(idx+1,3)], cls:idx+1>=2?'grade-c':g.cls, m:g.m}; downgraded=true; }
+    }
+    grade=g.name; gradeCls=g.cls; meaning=g.m;
+    if(downgraded) tips += `<span class="warn-line">· 合规题全部答错，触发「一票否决」降一档！价格、投产比、分利、安全承诺口径是红线。</span><br>`;
+    else if(r.compAllWrong) tips += `<span class="warn-line">· 合规题全部答错（一票否决），请重点复习口径纪律。</span><br>`;
+    if(score<60) tips += `· 未达「熟悉」，建议先刷「阶段一 · 懂产品」顺序练习补齐事实底账。<br>`;
+    if(score<80) tips += `· 距「掌握」还差 <b>${80-score}</b> 分，多做角色扮演与情景题。<br>`;
+    if(score>=90 && !r.compAllWrong) tips += `· 已达「精通」，合规零失误，可独立拜访客户。<br>`;
+  } else {
+    if(r.finalPass && pct>=90){ grade='优秀'; gradeCls='grade-a'; meaning='知识过硬、话术熟练，可独立见客户'; }
+    else if(r.finalPass){ grade='良好'; gradeCls='grade-b'; meaning='掌握扎实，个别场景需补'; }
+    else if(pct>=60 && !r.compAllWrong){ grade='合格'; gradeCls='grade-c'; meaning='基本掌握，应用不熟，多做练习'; }
+    else { grade='待提升'; gradeCls='grade-d'; meaning='知识底账不牢或口径纪律失守，回炉重学后再考'; }
+    if(!r.isPass) tips += `· 距离通过（${r.pass} 分）还差 <b>${r.pass - r.totalScore}</b> 分，建议针对性刷「错题重练」与对应章节。<br>`;
+    if(r.compAllWrong) tips += `<span class="warn-line">· 合规维题目全部答错，触发「一票否决」！价格、投产比、安全承诺口径是红线，请重点复习。</span><br>`;
+    if(pct<80) tips += `· 得分率 ${pct}%，客观题 ${r.objScore}/${r.objFull} 分，需加强事实底账。<br>`;
+    if(r.finalPass && pct>=90) tips += `· 已达标，可独立拜访客户。<br>`;
+  }
+
+  const titleText = isOral? (curSys().name+' · 现场口试成绩') : (curSys().name+' · 综合考试成绩');
+  const gradeSuffix = isOral ? '' : (r.finalPass?' · 通过':' · 未通过');
+  const scoreColor = isOral
+    ? (r.totalScore>=80?'var(--green)':(r.totalScore>=60?'var(--amber)':'var(--red)'))
+    : (r.totalScore>=r.pass?'var(--green)':'var(--red)');
+  const totalCell = isOral
+    ? `<td>${r.totalScore>=90?'精通':(r.totalScore>=80?'掌握':(r.totalScore>=70?'理解':(r.totalScore>=60?'熟悉':'未达熟悉')))}</td>`
+    : `<td>${r.isPass?`≥${r.pass} 达标`:`未达 ${r.pass}`}</td>`;
+  const retryBtn = isOral? `<button class="btn btn-primary" onclick="startOralExam()">再考一次</button>`
+                         : `<button class="btn btn-primary" onclick="startExam()">再考一次</button>`;
 
   q.innerHTML = `<div class="result">
-    <div style="font-size:14px;color:var(--text-2)">${curSys().name} · 综合考试成绩</div>
-    <div class="score-big" style="color:${r.totalScore>=r.pass?'var(--green)':'var(--red)'}">${r.totalScore}<span style="font-size:22px">/${r.totalFull}</span></div>
-    <div class="grade ${gradeCls}">${grade}${r.finalPass?' · 通过':' · 未通过'}</div>
+    <div style="font-size:14px;color:var(--text-2)">${titleText}</div>
+    <div class="score-big" style="color:${scoreColor}">${r.totalScore}<span style="font-size:22px">/${r.totalFull}</span></div>
+    <div class="grade ${gradeCls}">${grade}${gradeSuffix}</div>
     <div style="font-size:14px;color:var(--text-2);margin-bottom:16px">${meaning}</div>
     <table class="breakdown">
       <tr><th>项目</th><th>得分</th><th>满分</th><th>说明</th></tr>
-      <tr><td>客观题</td><td><b>${r.objScore}</b></td><td>${r.objFull}</td><td>单选/多选/判断/填空</td></tr>
-      <tr><td>主观题</td><td><b>${r.subScore}</b></td><td>${r.subFull}</td><td>简答/情景/案例（自评）</td></tr>
-      <tr><td><b>总分</b></td><td><b>${r.totalScore}</b></td><td>${r.totalFull}</td><td>${r.isPass?`≥${r.pass} 达标`:`未达 ${r.pass}`}</td></tr>
+      <tr><td>客观题</td><td><b>${r.objScore}</b></td><td>${r.objFull}</td><td>单选/多选/填空</td></tr>
+      <tr><td>主观题</td><td><b>${r.subScore}</b></td><td>${r.subFull}</td><td>口述/情景/合规（自评）</td></tr>
+      <tr><td><b>总分</b></td><td><b>${r.totalScore}</b></td><td>${r.totalFull}</td>${totalCell}</tr>
     </table>
     <div class="tips">${tips || '继续加油，保持练习！'}</div>
     <div class="action-bar" style="display:flex;margin-top:18px">
       <button class="btn btn-ghost" onclick="goHome()">返回首页</button>
-      <button class="btn btn-primary" onclick="startExam()">再考一次</button>
+      ${retryBtn}
     </div>
   </div>`;
 
