@@ -280,6 +280,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
       <div class="ic ic-green">📝</div><div class="nm">模拟考试</div>
       <div class="ds" id="examDesc">闭卷 · 100 分 · 80 分通过</div>
     </div>
+    <div class="mode-card hidden" id="oralExamCard" onclick="startOralExam()">
+      <div class="ic ic-red">🎤</div><div class="nm">现场模拟考试</div>
+      <div class="ds">面对面口试 · 100 分 · 四档定级</div>
+    </div>
   </div>
 
   <div class="section-title" id="abilityTitle">能力画像</div>
@@ -309,8 +313,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
   <div class="exam-rule" id="examRuleText"></div>
   <div class="section-title">确认开始</div>
   <div class="mode-card" style="width:100%" onclick="beginExam()">
-    <div class="ic ic-green">🚀</div><div class="nm">开始考试</div>
-    <div class="ds">计时开始后不可暂停，请预留 90 分钟</div>
+    <div class="ic ic-green">🚀</div><div class="nm" id="examStartBtnText">开始考试</div>
+    <div class="ds" id="examStartBtnSub">计时开始后不可暂停，请预留时间</div>
   </div>
 </div>
 
